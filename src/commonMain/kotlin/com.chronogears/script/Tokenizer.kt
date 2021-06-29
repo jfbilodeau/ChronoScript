@@ -295,7 +295,7 @@ class Tokenizer(val text: String, val filename: String = "<<>>") {
     }
 
     private fun skipWhiteSpace() {
-        while (!eof && currentChar in arrayOf('\t', ' ')) {
+        while (!eof && currentChar in arrayOf('\t', ' ', '\r')) {
             nextChar()
         }
     }

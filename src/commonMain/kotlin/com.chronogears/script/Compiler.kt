@@ -165,6 +165,7 @@ class Compiler {
             is StringExpression -> compileStringExpression(expression)
             is BinaryExpression -> compileBinaryExpression(expression)
             is AssignmentExpression -> compileAssignmentExpression(expression)
+            is VariableExpression -> compileVariableExpression(expression)
 
             else -> error("Unsupported expression type: ${expression}", expression)
         }
@@ -174,6 +175,16 @@ class Compiler {
         compileExpression(expression.expression)
 
         compileLeftValue(expression.leftValue)
+    }
+
+    private fun compileVariableExpression(expression: VariableExpression) {
+        if (compilingMain) {
+            code.add(OpCodes.PushRoot)
+            code.add(OpCodes.PushMemberValue)
+            code.add(stringIndex(expression.variableName))
+        } else {
+            TODO("Need to implement variables")
+        }
     }
 
     private fun compileLeftValue(leftValue: LeftValueExpression) {

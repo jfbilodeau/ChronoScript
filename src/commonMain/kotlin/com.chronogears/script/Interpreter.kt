@@ -56,6 +56,21 @@ class Interpreter(val runtime: Runtime) {
                     val stringId = opcodes[instructionIndex++]
                     push(runtime.dictionary[stringId])
                 }
+                OpCodes.PushRoot -> push(runtime.root)
+                OpCodes.PushMemberValue -> {
+                    pop(v1)
+
+                    if (v1.isNumber) {
+                        throw RuntimeException("Cannot access member of number")
+                    }
+
+                    val stringIndex = opcodes[instructionIndex++]
+                    val string = runtime.dictionary[stringIndex]
+
+                    v1.obj!!.getPropertyByName(string.value, v2)
+
+                    push(v2)
+                }
                 OpCodes.AssignGlobal -> {
                     val stringId = opcodes[instructionIndex++]
                     val propertyName = runtime.dictionary[stringId]
