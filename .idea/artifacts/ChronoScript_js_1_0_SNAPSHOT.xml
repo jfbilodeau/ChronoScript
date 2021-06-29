@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="ChronoScript-js-1.0-SNAPSHOT">
+    <output-path>C:\Users\jfbil\Documents\ChronoScript\build\libs</output-path>
+    <root id="archive" name="ChronoScript-js-1.0-SNAPSHOT.jar" />
+  </artifact>
+</component>
