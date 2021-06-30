@@ -19,11 +19,13 @@ class BinaryExpression(val left: Expression, val operator: Operator, val right: 
 class UnaryExpression(val operator: Operator, val expression: Expression, tokenizer: Tokenizer) : Expression(tokenizer)
 class NumberExpression(val number: Double, tokenizer: Tokenizer) : Expression(tokenizer)
 class StringExpression(val string: String, tokenizer: Tokenizer) : Expression(tokenizer)
-class IdentifierExpression(val name: String, tokenizer: Tokenizer) : Expression(tokenizer)
+class IdentifierExpression(val identifier: String, tokenizer: Tokenizer) : Expression(tokenizer)
 class ThisExpression(tokenizer: Tokenizer) : Expression(tokenizer)
 class ObjectExpression(tokenizer: Tokenizer): Expression(tokenizer) {
     val values = mutableListOf<ObjectEntry>()
 }
+class FunctionExpression(val name: String, val parameters: List<String>, tokenizer: Tokenizer) : Statement(tokenizer)
+class FunctionCallExpression(val arguments: List<Expression>, tokenizer: Tokenizer) : Expression(tokenizer)
 
 class ArrayExpression(tokenizer: Tokenizer) {
     val values = mutableListOf<Expression>()

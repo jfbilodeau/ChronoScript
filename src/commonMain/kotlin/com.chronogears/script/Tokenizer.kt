@@ -184,7 +184,7 @@ class Tokenizer(val text: String, val filename: String = "<<>>") {
 
             nextChar()
 
-            if (string in listOf( ")", "]", "}" ))
+            if (string in listOf( "(", "[", "{", ")", "]", "}" ))
                 break
         } while (!eof && currentChar in operatorChars)
 

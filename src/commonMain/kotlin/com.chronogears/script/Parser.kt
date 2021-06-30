@@ -23,7 +23,7 @@ class Parser(val tokenizer: Tokenizer) {
             module.statements.add(statement)
 
             if (!tokenizer.eof && !tokenizer.isOperator(Operator.SemiColon) && tokenizer.tokenType != TokenType.Eol) {
-                error("Expected ';' or new line. Found '${tokenizer.string}' instead")
+                expect("';' or new line")
             }
 
             tokenizer.nextIgnoreEol()
@@ -56,7 +56,7 @@ class Parser(val tokenizer: Tokenizer) {
         val block = Block(tokenizer)
 
         if (!tokenizer.isOperator(Operator.OpenBrace)) {
-            error("Expected '{'")
+            parserError("Expected '{'")
         }
 
         tokenizer.next()
@@ -67,7 +67,7 @@ class Parser(val tokenizer: Tokenizer) {
                 block.statements.add(statement)
 
                 if (tokenizer.isOperator(Operator.CloseBrace)) {
-                    error("Expected '}'")
+                    parserError("Expected '}'")
                 }
 
                 break
@@ -78,7 +78,7 @@ class Parser(val tokenizer: Tokenizer) {
             block.statements.add(statement)
 
             if (!tokenizer.isOperator(Operator.CloseBrace) && !tokenizer.isOperator(Operator.SemiColon) && tokenizer.tokenType != TokenType.Eol) {
-                error("Expected '}', ';' or new line. Found '${tokenizer.string}' instead")
+                parserError("Expected '}', ';' or new line. Found '${tokenizer.string}' instead")
             }
 
             if (tokenizer.isOperator(Operator.CloseBrace)) {
@@ -86,7 +86,7 @@ class Parser(val tokenizer: Tokenizer) {
             }
 
             if (tokenizer.eof) {
-                error("End of file encountered before closing block '}'")
+                parserError("End of file encountered before closing block '}'")
             }
 
             tokenizer.nextIgnoreEol()
@@ -163,12 +163,13 @@ class Parser(val tokenizer: Tokenizer) {
             tokenizer.next()
 
             if (member !is LeftValueExpression) {
-                error("Expected lvalue . Got ${member}")
+                parserError("Expected lvalue . Got ${member}")
+            } else {
+
+                val expression = parseExpression()
+
+                AssignmentExpression(member, expression, tokenizer)
             }
-
-            val expression = parseExpression()
-
-            AssignmentExpression(member, expression, tokenizer)
         } else {
             member
         }
@@ -235,15 +236,57 @@ class Parser(val tokenizer: Tokenizer) {
             tokenizer.isOperator(Operator.OpenBrace) -> parseObject()
             tokenizer.tokenType == TokenType.String -> parseString()
             tokenizer.tokenType == TokenType.Number -> parseNumber()
-            tokenizer.tokenType == TokenType.Identifier -> parseVariable()
+            tokenizer.tokenType == TokenType.Identifier -> parseFunctionOrVariable()
             else -> parserError("Unexpected token: ${tokenizer.string} (${tokenizer.tokenType})")
         }
     }
 
-    private fun parseVariable(): Expression {
-        var expression = VariableExpression(tokenizer.string, tokenizer)
+    private fun parseFunctionOrVariable(): Expression {
+        val identifier = tokenizer.string
 
         tokenizer.next()
+
+        if (tokenizer.isOperator(Operator.OpenParenthesis)) {
+            return parseFunctionDeclarationOrCall(identifier)
+        } else {
+            return parseVariable(identifier)
+        }
+    }
+
+    private fun parseFunctionDeclarationOrCall(identifier: String): Expression {
+        tokenizer.next()
+
+        val parameters = parseParameters()
+
+//        tokenizer.next()
+
+        return if (tokenizer.isOperator(Operator.OpenBrace)) {
+            parseFunctionDeclaration(identifier, parameters)
+        } else {
+            parseFunctionCall(identifier, parameters)
+        }
+    }
+
+    private fun parseFunctionDeclaration(identifier: String, parameters: CallParameters): Expression {
+        val parameterNames = mutableListOf<String>()
+
+        for (parameter in parameters.parameters) {
+            if (parameter !is IdentifierExpression) {
+                parserError("Expected parameter name.")
+            } else {
+                val identifier = parameter.identifier
+
+                parameterNames.add(identifier)
+            }
+        }
+    }
+
+    private fun parseFunctionCall(identifier: String, parameters: CallParameters): Expression {
+        TODO("Not yet implemented")
+    }
+
+    private fun parseVariable(identifier: String): Expression {
+        var expression = VariableExpression(identifier, tokenizer)
 
         return parseMemberAccess(expression)
     }
@@ -274,7 +317,7 @@ class Parser(val tokenizer: Tokenizer) {
 
     private fun parseObjectEntry(obj: ObjectExpression) {
         if (tokenizer.tokenType !in listOf(TokenType.String, TokenType.Identifier)) {
-            error("Expected identifier. Found \"${tokenizer.string}\" instead")
+            parserError("Expected identifier. Found \"${tokenizer.string}\" instead")
         }
 
         val key = tokenizer.string
@@ -282,7 +325,7 @@ class Parser(val tokenizer: Tokenizer) {
         tokenizer.nextIgnoreEol()
 
         if (!tokenizer.isOperator(Operator.Colon)) {
-            error("Colon (:) expected. Found \"${tokenizer.string}\" instead")
+            parserError("Colon (:) expected. Found \"${tokenizer.string}\" instead")
         }
 
         tokenizer.nextIgnoreEol()
@@ -290,7 +333,7 @@ class Parser(val tokenizer: Tokenizer) {
         val value = parseExpression()
 
         if (tokenizer.tokenType != TokenType.Eol && tokenizer.isOperator(Operator.Comma)) {
-            error("Expected end of line or comma (,). Found \"${tokenizer.string}\" instead")
+            parserError("Expected end of line or comma (,). Found \"${tokenizer.string}\" instead")
         }
 
         tokenizer.next()
@@ -315,10 +358,14 @@ class Parser(val tokenizer: Tokenizer) {
     private fun parseParameters(): CallParameters {
         val parameters = CallParameters(tokenizer)
 
-        while (tokenizer.string != ")") {
+        while (!tokenizer.isOperator(Operator.CloseParenthesis)) {
             val expression = parseExpression()
 
             parameters.parameters.add(expression)
+
+            if (tokenizer.isOperator(Operator.Comma) && tokenizer.isOperator(Operator.CloseParenthesis)) {
+                expect("',' or ')'")
+            }
         }
 
         tokenizer.next()
@@ -332,7 +379,7 @@ class Parser(val tokenizer: Tokenizer) {
         val expression = parseExpression()
 
         if (tokenizer.string != ")") {
-            parserError("Expected ')'")
+            expect("')'")
         }
 
         tokenizer.next()
@@ -368,6 +415,10 @@ class Parser(val tokenizer: Tokenizer) {
         }
 
         return NullExpression(tokenizer)
+    }
+
+    private fun expect(expected: String) {
+        val message = "Expected ${expected}. Found \"${tokenizer.string}\" instead"
     }
 
     private fun parserError(message: String): Expression {

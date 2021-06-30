@@ -100,4 +100,26 @@ class TestCompiler {
         obj.getPropertyByName("d", value)
         assertEquals(1.0, value.number)
     }
+
+    @Test
+    fun testCompileFunction() = runBlockingNoJs {
+        val runtime = compileProgram("testCompileFunction")
+        runtime.start()
+
+        val value = Value()
+
+        runtime.root.getPropertyByName("test1", value)
+
+        assert(value.isObject)
+        val obj = value.obj
+
+        assertIs<UserFunction>(obj)
+
+
+
+        obj.getPropertyByName("d", value)
+        assertEquals(1.0, value.number)
+    }
+
+
 }
