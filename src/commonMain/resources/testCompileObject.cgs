@@ -1,0 +1,8 @@
+a = 1
+b = 'test'
+c = {
+    d: a
+    'e': b
+    f: a + 3
+    g: 'text'
+}

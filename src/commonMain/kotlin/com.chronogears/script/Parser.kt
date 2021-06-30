@@ -230,8 +230,9 @@ class Parser(val tokenizer: Tokenizer) {
 
     fun parsePrimary(): Expression {
         return when {
-            tokenizer.string == "." -> parseThis()
-            tokenizer.string == "(" -> parseParenthesis()
+            tokenizer.isOperator(Operator.Dot) -> parseThis()
+            tokenizer.isOperator(Operator.OpenParenthesis) -> parseParenthesis()
+            tokenizer.isOperator(Operator.OpenBrace) -> parseObject()
             tokenizer.tokenType == TokenType.String -> parseString()
             tokenizer.tokenType == TokenType.Number -> parseNumber()
             tokenizer.tokenType == TokenType.Identifier -> parseVariable()
@@ -255,6 +256,48 @@ class Parser(val tokenizer: Tokenizer) {
         val memberAccess = parseMemberAccess(thisExpression)
 
         return memberAccess
+    }
+
+    private fun parseObject(): Expression {
+        tokenizer.nextIgnoreEol()
+
+        val obj = ObjectExpression(tokenizer)
+
+        while (!tokenizer.isOperator(Operator.CloseBrace)) {
+            parseObjectEntry(obj)
+        }
+
+        tokenizer.nextIgnoreEol()
+
+        return obj
+    }
+
+    private fun parseObjectEntry(obj: ObjectExpression) {
+        if (tokenizer.tokenType !in listOf(TokenType.String, TokenType.Identifier)) {
+            error("Expected identifier. Found \"${tokenizer.string}\" instead")
+        }
+
+        val key = tokenizer.string
+
+        tokenizer.nextIgnoreEol()
+
+        if (!tokenizer.isOperator(Operator.Colon)) {
+            error("Colon (:) expected. Found \"${tokenizer.string}\" instead")
+        }
+
+        tokenizer.nextIgnoreEol()
+
+        val value = parseExpression()
+
+        if (tokenizer.tokenType != TokenType.Eol && tokenizer.isOperator(Operator.Comma)) {
+            error("Expected end of line or comma (,). Found \"${tokenizer.string}\" instead")
+        }
+
+        tokenizer.next()
+
+        val entry = ObjectEntry(key, value)
+
+        obj.values.add(entry)
     }
 
     fun parseMemberAccess(expression: Expression): Expression {

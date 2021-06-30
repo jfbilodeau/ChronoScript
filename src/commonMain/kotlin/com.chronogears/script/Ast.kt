@@ -21,7 +21,7 @@ class NumberExpression(val number: Double, tokenizer: Tokenizer) : Expression(to
 class StringExpression(val string: String, tokenizer: Tokenizer) : Expression(tokenizer)
 class IdentifierExpression(val name: String, tokenizer: Tokenizer) : Expression(tokenizer)
 class ThisExpression(tokenizer: Tokenizer) : Expression(tokenizer)
-class ObjectExpression(tokenizer: Tokenizer) {
+class ObjectExpression(tokenizer: Tokenizer): Expression(tokenizer) {
     val values = mutableListOf<ObjectEntry>()
 }
 

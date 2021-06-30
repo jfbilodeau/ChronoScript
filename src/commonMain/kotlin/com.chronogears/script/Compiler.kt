@@ -166,6 +166,7 @@ class Compiler {
             is BinaryExpression -> compileBinaryExpression(expression)
             is AssignmentExpression -> compileAssignmentExpression(expression)
             is VariableExpression -> compileVariableExpression(expression)
+            is ObjectExpression -> compileObjectExpression(expression)
 
             else -> error("Unsupported expression type: ${expression}", expression)
         }
@@ -254,6 +255,12 @@ class Compiler {
 
             else -> error("Unhandled operator: ${expression.operator}", expression)
         }
+    }
+
+    private fun compileObjectExpression(expression: ObjectExpression) {
+        code.add(OpCodes.PushNewObject)
+
+        TODO("WIP")
     }
 
     fun error(message: String, node: AstNode) {

@@ -82,4 +82,22 @@ class TestCompiler {
         assert(value.isNumber)
         assertEquals(3.0, value.number)
     }
+
+    @Test
+    fun testCompileObject() = runBlockingNoJs {
+        val runtime = compileProgram("testCompileObject")
+        runtime.start()
+
+        val value = Value()
+
+        runtime.root.getPropertyByName("c", value)
+
+        assert(value.isObject)
+        val obj = value.obj
+
+        assertNotNull(obj)
+
+        obj.getPropertyByName("d", value)
+        assertEquals(1.0, value.number)
+    }
 }

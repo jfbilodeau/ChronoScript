@@ -31,7 +31,9 @@ enum class Operator(val string: String) {
     Pipe2("||"),
     Equal("="),
     Equal2("=="),
-    SemiColon(";")
+    SemiColon(";"),
+    Colon(":"),
+    Comma(",")
 }
 
 enum class Keyword(val string: String) {
@@ -106,7 +108,7 @@ class Tokenizer(val text: String, val filename: String = "<<>>") {
     fun nextIgnoreEol(): TokenType {
         do {
             next()
-        } while (tokenType == TokenType.Eol)
+        } while (tokenType == TokenType.Eol && tokenType != TokenType.Eof)
 
         return tokenType
     }
